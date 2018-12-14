@@ -1,0 +1,438 @@
+
+# ---------------------------------------------------------
+#2.2　列表推导和生成器表达式
+#2.2.1　列表推导和可读性
+# 把一个字符串变成 Unicode 码位的列表
+>>> symbols = '$¢£¥€¤'
+>>> codes=[]
+>>> for symbol in symbols:
+...     codes.append(ord(symbol))  # 返回对应的 ASCII 数值，或者 Unicode 数值返回值是对应的十进制整数。
+...
+>>> codes
+[36, 162, 163, 165, 8364, 164]
+
+# 把字符串变成 Unicode 码位的另外一种写法
+>>> symbols = '$¢£¥€¤'
+>>> codes =[ord(symbol) for symbol in symbols]  # 列表推导的 list comprehension
+>>> codes
+[36, 162, 163, 165, 8364, 164]
+
+
+#列表推导同filter和map的比较
+
+>>> symbols = '$¢£¥€¤'
+>>> beyond_ascii=[ord(s) for s in symbols if ord(s)>127]
+>>> beyond_ascii
+[162, 163, 165, 8364, 164]
+>>> beyond_ascii = list(filter(lambda c:c>127,map(ord,symbols)))
+>>> beyond_ascii
+[162, 163, 165, 8364, 164]
+
+# 2.2.3　笛卡儿积
+>>> colors=['black','white']
+>>> sizes=['S','M','L']
+>>> tshirts=[(colors,size) for color in colors for size in sizes]
+>>> tshirts
+[(['black', 'white'], 'S'), (['black', 'white'], 'M'), (['black', 'white'], 'L'), (['black', 'white'], 'S'), (['black', 'white'], 'M'), (['black', 'white'], 'L')]
+
+
+# 用生成器表达式初始化元组和数组
+>>> symbols = '$¢£¥€¤'
+>>> tuple(ord(symbol) for symbol in symbols)
+(36, 162, 163, 165, 8364, 164)
+>>> import array
+>>> array.array('I',(ord(symbol) for symbol in symbols))
+array('I', [36, 162, 163, 165, 8364, 164])
+
+
+# ----------------------------------------------------------------------------------------------------------------------------
+# 2.3　元组不仅仅是不可变的列表
+
+#示例 2-7　把元组用作记录
+>>> lax_coordinates=(33.9425,-118.408056)  #洛杉矶国际机场的经纬度
+>>> city, year, pop, chg, area = ('Tokyo',2003,32450,0.66,8041) # 东京市的一些信息：市名、年份、人口（单位：百万）、人口变化（单位：百分比）和面积（单位：平方千米）
+>>> traveler_ids=[('USA','31195855'),('BRA','CE342567'),      # 一个元组列表，元组的形式为 (country_code, passport_number)
+...     ('ESP','XDA205856')]
+>>> for passport in sorted(traveler_ids):  #在迭代的过程中，passport 变量被绑定到每个元组上
+...     print('%s%s' % passport)   # % 格式运算符能被匹配到对应的元组元素上。
+...
+BRACE342567
+ESPXDA205856
+USA31195855
+
+
+>>> for country, _ in traveler_ids:    # for 循环可以分别提取元组里的元素，也叫作拆包（unpacking）。因为元组中第二个元素对我们没有什么用，所以它赋值给“_”占位符。
+...     print(country)
+...
+USA
+BRA
+ESP
+
+# 2.3.2　元组拆包
+>>> lax_coordinates=(33.9425,-118.408056)
+>>> latitude, longitude = lax_coordinates  # 元组拆包
+>>> latitude
+33.9425
+>>> longitud
+
+
+# 还可以用 * 运算符把一个可迭代对象拆开作为函数的参数
+>>> divmod(20,8)
+(2, 4)
+>>> t=(20,8)
+>>> divmod(*t)
+(2, 4)
+>>> quotient,remainder=divmod(*t)
+>>> quotient, remainder
+(2, 4)
+
+#下面是另一个例子，这里元组拆包的用法则是让一个函数可以用元组的形式返回多个值，然后调用函数的代码就能轻松地接受这些返回值。比如 os.path.split() 函数就会返回以路径和最后一个文件名组成的元组 (path, last_part):
+>>> import os
+>>> _, filename = os.path.split('/home/luciano/.ssh/idrsa.pub')
+>>> filename
+'idrsa.pub'
+
+
+# 在元组拆包中使用 * 也可以帮助我们把注意力集中在元组的部分元素上
+# ----Python 中，函数用 *args 来获取不确定数量的参数算是一种经典写法了
+
+>>> a, b, *rest= range(5)
+>>> a, b, rest
+(0, 1, [2, 3, 4])
+>>> a, b, *rest = range(3)
+>>> a, b, *rest = range(2)
+>>> a, b, rest
+(0, 1, [])
+>>> a, *body, c, d =range(5)
+>>> a, body, c, d
+(0, [1, 2], 3, 4)
+>>> *head, b, c, d = range(5)
+>>> head, b, c, d
+([0, 1], 2, 3, 4)
+
+
+#2.3.3　嵌套元组拆包
+
+  # 每个元组内有 4 个元素，其中最后一个元素是一对坐标。
+>>> metro_areas = [
+...     ('Tokyo','JP',36.933,(35.689722,139.691667)),
+...     ('Delhi NCR', 'IN', 21.935, (28.613889, 77.208889)),
+...     ('Mexico City', 'MX', 20.142, (19.433333, -99.133333)),
+...     ('New York-Newark', 'US', 20.104, (40.808611, -74.020386)),
+...     ('Sao Paulo', 'BR', 19.649, (-23.547778, -46.635833)),
+... ]
+>>> print('{:15} | {:^9} | {:^9}'.format('', 'lat.', 'long.'))
+                |   lat.    |   long.
+>>> fmt = '{:15} | {:9.4f} | {:9.4f
+>>> for name, cc, pop, (latitude, longitude) in metro_areas: #我们把输入元组的最后一个元素拆包到由变量构成的元组里，这样就获取了坐标。
+...     if longitude <= 0:    # if longitude <= 0: 这个条件判断把输出限制在西半球的城市
+...             print(fmt.format(name, latitude, longitude))
+...
+Mexico City     |   19.4333 |  -99.1333
+New York-Newark |   40.8086 |  -74.0204
+Sao Paulo       |  -23.5478 |  -46.
+
+
+# 2.3.4　具名元组
+
+#示例 2-9　定义和使用具名元组
+>>> from collections import namedtuple
+>>> City = namedtuple('City', 'name country population coordinates')  #创建一个具名元组需要两个参数，一个是类名，另一个是类的各个字段的名字。后者可以是由数个字符串组成的可迭代对象，或者是由空格分隔开的字段名组成的字符串。
+>>> tokyo = City('Tokyo', 'JP', 36.933, (35.689722, 139.691667))  #存放在对应字段里的数据要以一串参数的形式传入到构造函数中（注意，元组的构造函数却只接受单一的可迭代对象）
+>>> tokyo  # 可以通过字段名或者位置来获取一个字段的信息。
+City(name='Tokyo', country='JP', population=36.933, coordinates=(35.689722, 139.691667))
+>>> tokyo.population
+36.933
+>>> tokyo.coordinates
+(35.689722, 139.691667)
+>>> tokyo[1]
+'JP'
+>>> City._fields #fields 属性是一个包含这个类所有字段名称的元组。
+('name', 'country', 'population', 'coordinates')
+>>> LatLong = namedtuple('LatLong', 'lat long')
+>>> delhi_data = ('Delhi NCR', 'IN', 21.935, LatLong(28.613889, 77.208889))
+>>> delhi = City._make(delhi_data) #用 _make() 通过接受一个可迭代对象来生成这个类的一个实例，它的作用跟 City(*delhi_data) 是一样的。
+>>> delhi._asdict()  # _asdict() 把具名元组以 collections.OrderedDict 的形式返回，我们可以利用它来把元组里的信息友好地呈现出来
+OrderedDict([('name', 'Delhi NCR'), ('country', 'IN'), ('population', 21.935), ('coordinates', LatLong(lat=28.613889, long=77.208889))])
+>>> for key, value in delhi._asdict().items():
+...     print(key + ':', value)
+...
+name: Delhi NCR
+country: IN
+population: 21.935
+coordinates: LatLong(lat=28.613889, long=77.208889)
+
+# --元组是一种很强大的可以当作记录来用的数据类型。它的第二个角色则是充当一个不可变的列表。
+
+# -------------------------------------------------------------------------------------------------------
+
+# 2.4　切片
+
+>>> l = [s for s in range(10,70,10)]
+>>> l
+[10, 20, 30, 40, 50, 60]
+>>> l[:2] # 在下标2的地方分割
+[10, 20]
+>>> l[2:]
+[30, 40, 50, 60]
+>>> l[3:] # 在下标3的地方分割
+[40, 50, 60
+
+#2.4.2　对对象进行切片
+
+>>> s = 'bicycle'
+>>> s[::3]
+'bye'
+>>> s[::-1]
+'elcycib'
+>>> s[::-2]
+'eccb'
+
+# 示例 2-11　纯文本文件形式的收据以一行字符串的形式被解析
+>>> invoice = """
+... 0.....6................................40........52...55........
+... 1909  Pimoroni PiBrella                    $17.50    3    $52.50
+... 1489  6mm Tactile Switch x20                $4.95    2     $9.90
+... 1510  Panavise Jr. - PV-201                $28.00    1    $28.00
+... 1601  PiTFT Mini Kit 320x240               $34.95    1    $34.95
+... """
+>>> SKU = slice(0, 6)
+>>> DESCRIPTION = slice(6, 40)
+>>> UNIT_PRICE = slice(40, 52)
+>>> QUANTITY = slice(52, 55)
+>>> ITEM_TOTAL = slice(55, None)
+>>> line_items = invoice.split('\n')[2:]
+>>> for item in line_items:
+...     print(item[UNIT_PRICE], item[DESCRIPTION])
+...
+   $17.50    Pimoroni PiBrella
+    $4.95    6mm Tactile Switch x20
+   $28.00    Panavise Jr. - PV-201
+   $34.95    PiTFT Mini Kit 320x240
+
+# 2.4.4　给切片赋值
+
+>>> l=list(range(10))
+>>> l
+[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+>>> l[2:5]=[20,30]
+>>> l
+[0, 1, 20, 30, 5, 6, 7, 8, 9]
+>>> del l[5:7]
+>>> l
+[0, 1, 20, 30, 5, 8, 9]
+>>> l[3::2]=[11,22]
+>>> l
+[0, 1, 20, 11, 5, 22, 9]
+>>> l[2:5]=100  # 如果赋值的对象是一个切片，那么赋值语句的右侧必须是个可迭代对象。即便只有单独一个值，也要把它转换成可迭代的序列。
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+TypeError: can only assign an iterable
+>>> l[2:5]=[100]
+>>> l
+[0, 1, 100, 22, 9]
+
+# 2.5　对序列使用+和*
+#  。通常 + 号两侧的序列由相同类型的数据所构成，在拼接的过程中，两个被操作的序列都不会被修改，Python 会新建一个包含同样类型数据的序列来作为拼接的结果。
+>>> l=[1,2,3]
+>>> l*5
+[1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3]
+>>> 5*'abcd'
+'abcdabcdabcdabcdabcd'
+
+#示例 2-12　一个包含 3 个列表的列表，嵌套的 3 个列表各自有 3 个元素来代表井字游戏的一行方块
+>>> board=[['_']*3 for i in range(3)]  # 建立一个包含 3 个列表的列表，被包含的 3 个列表各自有 3 个元素。打印出这个嵌套列表。
+>>> board
+[['_', '_', '_'], ['_', '_', '_'], ['_', '_', '_']]
+>>> board[1][2]='X' # 把第 1 行第 2 列的元素标记为 X，再打印出这个列表。
+>>> board
+[['_', '_', '_'], ['_', '_', 'X'], ['_', '_', '_']]
+
+
+# 示例 2-13　含有 3 个指向同一对象的引用的列表是毫无用处的
+
+>>> weird_board = [['_'] * 3] * 3  # 外面的列表其实包含 3 个指向同一个列表的引用
+>>> weird_board
+[['_', '_', '_'], ['_', '_', '_'], ['_', '_', '_']]
+>>> weird_board[1][2] = 'O'  # 一旦我们试图标记第 1 行第 2 列的元素，就立马暴露了列表内的 3 个引用指向同一个对象的事实
+>>> weird_board
+[['_', '_', 'O'], ['_', '_', 'O'], ['_', '_', 'O']]
+
+
+# 追加同一个行对象（row）3 次到游戏板（board）。
+
+>>> row=['_']*3
+>>> board
+[]
+>>> row=['_']*3
+>>> board= []
+>>> for i in range(3):
+...     board.append(row)   # 追加同一个行对象（row）3 次到游戏板（board）
+...
+>>> board
+[['_', '_', '_'], ['_', '_', '_'], ['_', '_', '_']]
+>>> board[1][2]='0'
+>>> board
+[['_', '_', '0'], ['_', '_', '0'], ['_', '_', '0']]
+
+
+#每次迭代中都新建了一个列表，作为新的一行（row）追加到游戏板（board）
+>>> board=[]
+>>> for i in range(3):
+...     row=['_'] *3
+...     board.append(row)
+...
+>>> board[2][0]='X'  # 正如我们所期待的，只有第 2 行的元素被修改
+>>> board
+[['_', '_', '_'], ['_', '_', '_'], ['X', '_', '_']]
+
+
+# ------------------------------------------------------------------------------------------
+
+#2.6　序列的增量赋值
+
+>>> l=[1,2,3]
+>>> id(l)  #刚开始时列表的 ID。
+1733205361352
+>>> l*=2
+>>> l
+[1, 2, 3, 1, 2, 3]
+>>> id(l)  # 运用增量乘法后，列表的 ID 没变，新元素追加到列表上
+1733205361352
+>>> t=(1,2,3)
+>>> id(t)  #元组最开始的 ID。
+1733205227776
+>>> t*=2
+>>> id(t) # 运用增量乘法后，新的元组被创建
+1733203773288
+
+# 对不可变序列进行重复拼接操作的话，效率会很低，因为每次都有一个新对象，而解释器需要把原来对象中的元素先复制到新的对象里，然后再追加新的元素。
+# str 是一个例外，因为对字符串做 += 实在是太普遍了，所以 CPython 对它做了优化。为 str 初始化内存的时候，程序会为它留出额外的可扩展空间，因此进行增量操作的时候，并不会涉及复制原有字符串到新位置这类操作。
+
+# 一个关于+=的谜题
+
+#2.7　list.sort方法和内置函数sorted
+
+>>> fruits = ['grape', 'raspberry', 'apple', 'banana']  # 新建了一个按照字母排序的字符串列表
+>>> sorted(fruits)
+['apple', 'banana', 'grape', 'raspberry']
+>>> fruits
+['grape', 'raspberry', 'apple', 'banana']  # 原列表并没有变化
+>>> sorted(fruits,reverse=True)     # 按照字母降序排序。
+['raspberry', 'grape', 'banana', 'apple']
+>>> sorted(fruits,key=len)          # 建一个按照长度排序的字符串列表。因为这个排序算法是稳定的 grape 和 apple 的长度都是 5，它们的相对位置跟在原来的列表里是一样
+['grape', 'apple', 'banana', 'raspberry']
+>>> sorted(fruits,key=len,reverse=True)  # 按照长度降序排序的结果。结果并不是上面那个结果的完全翻转，因为用到的排序算法是稳定的，也就是说在长度一样时，grape 和 apple 的相对位置不会改变
+['raspberry', 'banana', 'grape', 'apple']
+>>> fruits             # 直到这一步，原列表 fruits 都没有任何变化
+['grape', 'raspberry', 'apple', 'banana']
+>>> fruits.sort()
+>>> fruits                #此时 fruits 本身被排序
+['apple', 'banana', 'grape', 'raspberry']
+
+
+# -------------------------------------------------------------------------------------------
+
+# 2.8　用bisect来管理已排序的序列
+# 示例 2-18　根据一个分数，找到它所对应的成绩
+>>> import bisect
+>>> def grade(score,breakpoints=[60,70,80,90],grades='FDCBA'):
+...     i=bisect.bisect(breakpoints,score)
+...     return grades[i]
+...
+>>> [grade(score) for score in [33,99,77,70,89,90,1001]]
+['F', 'A', 'C', 'C', 'B', 'A', 'A']
+
+
+# 2.8.2　用bisect.insort插入新元素
+
+#2.9　当列表不是首选时
+#2.9.1　数组
+# 需要一个只包含数字的列表，那么 array.array 比 list 更高效。数组支持所有跟可变序列有关的操作，包括 .pop、.insert 和 .extend。另外，数组还提供从文件读取和存入文件的更快的方法，如 .frombytes 和 .tofile。
+
+>>> from array import array  #引入 array 类型。
+>>> from random import random
+>>> floats = array('d',(random() for i in range(10**7))) #利用一个可迭代对象来建立一个双精度浮点数组（类型码是 'd'），这里我们用的可迭代对象是一个生成器表达式
+>>> floats[-1]  #查看数组的最后一个元素。
+0.4983339639348231
+>>> fp = open('floats.bin', 'wb')  #把数组存入一个二进制文件里。
+>>> floats.tofile(fp)
+>>> fp.close()
+>>> floats2 = array('d')    #新建一个双精度浮点空数组。
+>>> fp = open('floats.bin', 'rb')
+>>> floats2.fromfile(fp, 10**7)  #把 1000 万个浮点数从二进制文件里读取出来
+>>> <fp class="close"></fp>
+>>> floats2[-1]   # 查看新数组的最后一个元素。
+0.4983339639348231
+>>> floats2 == floats  #检查两个数组的内容是不是完全一样
+True
+
+
+# 2.9.2　内存视图
+# memoryview 是一个内置类，它能让用户在不复制内容的情况下操作同一个数组的不同切片
+
+>>> import array
+>>> numbers = array.array('h', [-2, -1, 0, 1, 2]) # 利用含有 5 个短整型有符号整数的数组（类型码是 'h'）创建一个 memoryview。
+>>> memv = memoryview(numbers)
+>>> len(memv)
+5
+>>> memv[0]                 # memv 里的 5 个元素跟数组里的没有区别。
+-2
+>>> memv_oct = memv.cast('B')   #创建一个 memv_oct，这一次是把 memv 里的内容转换成 'B' 类型，也就是无符号字符。
+>>> memv_oct.tolist()           #以列表的形式查看 memv_oct 的内容
+[254, 255, 255, 255, 0, 0, 1, 0, 2, 0]
+>>> memv_oct[5] =4                #把位于位置 5 的字节赋值成 4。
+>>> numbers
+array('h', [-2, -1, 1024, 1, 2])  #因为我们把占 2 个字节的整数的高位字节改成了 4，所以这个有符号整数的值就变成了 1024。
+
+# 2.9.3　NumPy和SciPy
+
+>>> import numpy        # 安装 NumPy 之后，导入它（NumPy 并不是 Python 标准库的一部分）
+>>> a = numpy.arange(12)
+>>> a
+array([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11])   # 新建一个 0~11 的整数的 numpy.ndarray，然后把它打印出来
+>>> type(a)
+<class 'numpy.ndarray'>
+>>> a.shape          #看看数组的维度，它是一个一维的、有 12 个元素的数组
+(12,)
+>>> a.shape=3,4     # 把数组变成二维的，然后把它打印出来看看。
+>>> a
+array([[ 0,  1,  2,  3],
+       [ 4,  5,  6,  7],
+       [ 8,  9, 10, 11]])
+>>> a[2]            # 打印出第 2 行
+array([ 8,  9, 10, 11])
+>>> a[2,1]          #打印第 2 行第 1 列的元素
+9
+>>> a[:,1]          # 把第 1 列打印出来。
+array([1, 5, 9])
+>>> a.transpose()   #把行和列交换，就得到了一个新数组
+array([[ 0,  4,  8],
+       [ 1,  5,  9],
+       [ 2,  6, 10],
+       [ 3,  7, 11]])
+
+
+
+
+#双向队列和其他形式的队列
+>>> from collections import deque
+>>> dq = deque(range(10), maxlen=10)    # maxlen 是一个可选参数，代表这个队列可以容纳的元素的数量，而且一旦设定，这个属性就不能修改了。
+>>> dq
+deque([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], maxlen=10)
+>>> dq.rotate(3)   # 队列的旋转操作接受一个参数 n，当 n > 0 时，队列的最右边的 n 个元素会被移动到队列的左边。当 n < 0 时，最左边的 n 个元素会被移动到右边。
+>>> dq
+deque([7, 8, 9, 0, 1, 2, 3, 4, 5, 6], maxlen=10)
+>>> dq.rotate(-4)
+>>> dq
+deque([1, 2, 3, 4, 5, 6, 7, 8, 9, 0], maxlen=10)
+>>> dq.appendleft(-1)  #当试图对一个已满（len(d) == d.maxlen）的队列做头部添加操作的时候，它尾部的元素会被删除掉。注意在下一行里，元素 0 被删除了。
+>>> dq
+...
+deque([-1, 1, 2, 3, 4, 5, 6, 7, 8, 9], maxlen=10)
+>>> dq.extend([11, 22, 33])   #在尾部添加 3 个元素的操作会挤掉 -1、1 和 2
+>>> dq
+deque([3, 4, 5, 6, 7, 8, 9, 11, 22, 33], maxlen=10)
+>>> dq.extendleft([10, 20, 30, 40]) #extendleft(iter) 方法会把迭代器里的元素逐个添加到双向队列的左边，因此迭代器里的元素会逆序出现在队列里
+>>> dq
+deque([40, 30, 20, 10, 3, 4, 5, 6, 7, 8], maxlen=10)  #
